@@ -1,0 +1,76 @@
+category,count,percent,group,strain
+Unknown,3,7.692307692,27L vs 27R,XM-24
+Amino acid metabolism,1,2.564102564,27L vs 27R,XM-24
+Cell wall and signaling,2,5.128205128,27L vs 27R,XM-24
+Cofactor,0,0,27L vs 27R,XM-24
+DNA,0,0,27L vs 27R,XM-24
+Energy and redox,2,5.128205128,27L vs 27R,XM-24
+Other metabolites,2,5.128205128,27L vs 27R,XM-24
+Photosynthesis,7,17.94871795,27L vs 27R,XM-24
+"Purines, pyrimidines, nucleotides",1,2.564102564,27L vs 27R,XM-24
+Regulatory system and stress,3,7.692307692,27L vs 27R,XM-24
+Respiration,4,10.25641026,27L vs 27R,XM-24
+S and N metabolism,2,5.128205128,27L vs 27R,XM-24
+Transcription,1,2.564102564,27L vs 27R,XM-24
+Translation,6,15.38461538,27L vs 27R,XM-24
+Transporters,5,12.82051282,27L vs 27R,XM-24
+Unknown,4,9.302325581,30L vs 30R,XM-24
+Amino acid metabolism,2,4.651162791,30L vs 30R,XM-24
+Cell wall and signaling,3,6.976744186,30L vs 30R,XM-24
+Cofactor,0,0,30L vs 30R,XM-24
+DNA,1,2.325581395,30L vs 30R,XM-24
+Energy and redox,3,6.976744186,30L vs 30R,XM-24
+Other metabolites,4,9.302325581,30L vs 30R,XM-24
+Photosynthesis,3,6.976744186,30L vs 30R,XM-24
+"Purines, pyrimidines, nucleotides",2,4.651162791,30L vs 30R,XM-24
+Regulatory system and stress,2,4.651162791,30L vs 30R,XM-24
+Respiration,3,6.976744186,30L vs 30R,XM-24
+S and N metabolism,3,6.976744186,30L vs 30R,XM-24
+Transcription,1,2.325581395,30L vs 30R,XM-24
+Translation,7,16.27906977,30L vs 30R,XM-24
+Transporters,5,11.62790698,30L vs 30R,XM-24
+Unknown,5,6.578947368,30L vs 27R,XM-24
+Amino acid metabolism,3,3.947368421,30L vs 27R,XM-24
+Cell wall and signaling,6,7.894736842,30L vs 27R,XM-24
+Cofactor,2,2.631578947,30L vs 27R,XM-24
+DNA,1,1.315789474,30L vs 27R,XM-24
+Energy and redox,2,2.631578947,30L vs 27R,XM-24
+Other metabolites,3,3.947368421,30L vs 27R,XM-24
+Photosynthesis,9,11.84210526,30L vs 27R,XM-24
+"Purines, pyrimidines, nucleotides",5,6.578947368,30L vs 27R,XM-24
+Regulatory system and stress,6,7.894736842,30L vs 27R,XM-24
+Respiration,3,3.947368421,30L vs 27R,XM-24
+S and N metabolism,4,5.263157895,30L vs 27R,XM-24
+Transcription,3,3.947368421,30L vs 27R,XM-24
+Translation,19,25,30L vs 27R,XM-24
+Transporters,5,6.578947368,30L vs 27R,XM-24
+Unknown,2,40,30R vs 27R,XM-24
+Amino acid metabolism,0,0,30R vs 27R,XM-24
+Cell wall and signaling,0,0,30R vs 27R,XM-24
+Cofactor,0,0,30R vs 27R,XM-24
+DNA,0,0,30R vs 27R,XM-24
+Energy and redox,0,0,30R vs 27R,XM-24
+Other metabolites,0,0,30R vs 27R,XM-24
+Photosynthesis,2,40,30R vs 27R,XM-24
+"Purines, pyrimidines, nucleotides",0,0,30R vs 27R,XM-24
+Regulatory system and stress,0,0,30R vs 27R,XM-24
+Respiration,0,0,30R vs 27R,XM-24
+S and N metabolism,0,0,30R vs 27R,XM-24
+Transcription,0,0,30R vs 27R,XM-24
+Translation,1,20,30R vs 27R,XM-24
+Transporters,0,0,30R vs 27R,XM-24
+Unknown,0,0,30L vs 27L,XM-24
+Amino acid metabolism,1,14.28571429,30L vs 27L,XM-24
+Cell wall and signaling,2,28.57142857,30L vs 27L,XM-24
+Cofactor,0,0,30L vs 27L,XM-24
+DNA,0,0,30L vs 27L,XM-24
+Energy and redox,0,0,30L vs 27L,XM-24
+Other metabolites,0,0,30L vs 27L,XM-24
+Photosynthesis,0,0,30L vs 27L,XM-24
+"Purines, pyrimidines, nucleotides",0,0,30L vs 27L,XM-24
+Regulatory system and stress,1,14.28571429,30L vs 27L,XM-24
+Respiration,0,0,30L vs 27L,XM-24
+S and N metabolism,0,0,30L vs 27L,XM-24
+Transcription,1,14.28571429,30L vs 27L,XM-24
+Translation,1,14.28571429,30L vs 27L,XM-24
+Transporters,1,14.28571429,30L vs 27L,XM-24
