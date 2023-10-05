@@ -1,0 +1,304 @@
+---
+title: "Synechococcus Proteome Differential Abundance Analysis Figures"
+author: "Cara Schiksnis"
+date: "6/8/23"
+output: html_notebook
+---
+
+### Description: Differential abundance analysis figures (Figures 2 and 3 in text)
+
+**Load packages:**
+```{r, results='hide', message=FALSE, warning=FALSE}
+if(!require(ggplot2)){install.packages("ggplot2")}
+if(!require(tidyr)){install.packages("tidyr")}
+if(!require(ggh4x)){install.packages("ggh4x")}
+if(!require(ggvenn)){install.packages("ggvenn")}
+if(!require(ggpubr)){install.packages("ggpubr")}
+if(!require(nord)){install.packages("nord")}
+if(!require(forcats)){install.packages("forcats")}
+if(!require(reshape)){install.packages("reshape")}
+if(!require(plyr)){install.packages("plyr")}
+if(!require(scales)){install.packages("scales")}
+
+library(ggplot2)
+library(tidyr)
+library(ggh4x)
+library(ggvenn)
+library(ggpubr)
+library(nord)
+library(forcats)
+library(reshape)
+library(plyr)
+library(scales)
+```
+
+
+#### Magnitude of proteomic responses of each strain [Fig 2A]
+```{r, message=FALSE, warning=FALSE}
+# load pairwise percentage dfs for each strain
+fig2_yx <- read.csv("yx_pairwise_percentages_fig2.csv")
+fig2_xm <- read.csv("xm_pairwise_percentages_fig2.csv")
+
+# make into one df
+fig2_yx$Strain <- "YX04-1"
+fig2_xm$Strain <- "XM-24"
+fig2_df <- rbind(fig2_yx, fig2_xm)
+fig2_df <- gather(fig2_df, key = "Up_Down", value = "Proportion", "Increased":"Decreased")
+fig2_df$Comparison <- factor(fig2_df$Comparison, levels = c("30R vs 27R", "30L vs 27L", "27L vs 27R", "30L vs 30R", "30L vs 27R"))
+
+# facet plot with both strains, colors for up vs down regulated
+fig2_facet_plot <- ggplot(fig2_df, aes(y=Proportion, x=Comparison, fill = Up_Down)) +
+  geom_col(alpha = 1, width = 0.6, size = 0.5,
+           position = "stack", color = "black") +
+  facet_grid(factor(Strain, levels = c("YX04-1", "XM-24")) ~ 
+               factor(Treatment, levels=c('Warming', 'Fe limitation', 
+                                          'Warming x Fe limitation')), 
+             scales = "free",  space = "free_x", labeller = label_wrap_gen(width = 20)) +
+  force_panelsizes(cols = c(0.2, 0.2, 0.15)) +
+  theme_bw() +
+  scale_fill_manual(values = c("white", "black")) +
+  theme(legend.position = c(0.11, 0.85), 
+        legend.key = element_rect(fill = NA),
+        legend.box.background = element_rect(color = "black", size = 0.7),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(.3, "cm"),
+        
+        axis.text.x = element_text(angle = 40, vjust = 1, hjust=1, color = "black", size = 10),
+        axis.text.y = element_text(color = "black", size = 10), 
+        axis.title.y = element_text(size = 12), 
+        
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA, size = 1), 
+        strip.background = element_rect(colour="black", fill= "white", size = 1), 
+        strip.text.x = element_text(size = 8, color = "black"), 
+        strip.text.y = element_text(size = 10)) +
+  labs(y = "Differentially abundant proteins (%)", x = element_blank()) 
+  
+
+# this adds colors to facet plot labels
+g <- ggplot_gtable(ggplot_build(fig2_facet_plot))
+striprt <- which( grepl('strip-r', g$layout$name) | grepl('strip-t', g$layout$name))
+fills <- c("brown","lightskyblue3","mediumpurple")
+k <- 1
+for (i in striprt) {
+  j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+  g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- fills[k]
+  k <- k+1
+}
+
+# save
+pdf("Fig_2A_Magnitude_Facet_resize.pdf", width = 3.75, height = 3.75)
+grid::grid.draw(g)
+dev.off()
+
+# edited in Affinity designer to move legend, and then combine with Figures 3B and 3C
+```
+
+
+#### Functional categories chart [Fig 2B, 2C]
+```{r, message=FALSE, warning=FALSE}
+# make plot for each strain, then combine for figure
+
+# YX04-1
+df_yx <- read.csv("yx_categories_summary_fig2.csv")
+df_yx$group <- factor(df_yx$group, levels = c("30L vs 27R", "30L vs 30R", "27L vs 27R", "30L vs 27L", "30R vs 27R")) # to arrange groups in the order I want them to be displayed in the figure
+
+
+# plot:
+colors <- nord(palette = "aurora") # build color palette large enough for your # of categories (stacks)
+colors_2 <- nord(palette = "algoma_forest")
+colors <- c(colors, colors_2)
+colors <- c("lightgrey", colors, "wheat1", "darkblue")
+
+yx_cats <- ggplot(data=df_yx, aes(x= group, y = percent, fill = fct_reorder(category, percent))) +
+  geom_bar(stat="identity", position= 'stack', alpha = 0.95, width = 0.9, color = "black", size = 0.2) +
+  theme_classic() + 
+  ggtitle("Oceanic YX04-1") +
+  scale_fill_manual(breaks = c("Unknown", "Amino acid metabolism", "Cell wall and signaling", "Cofactor", "DNA", "Energy and redox", "Other metabolites", "Photosynthesis", "Purines, pyrimidines, nucleotides", "Regulatory system and stress", "Respiration", "S and N metabolism", "Transcription", "Translation", "Transporters"), values = colors) + 
+  theme(legend.position = "none", 
+        legend.title = element_blank(), 
+        legend.key.size = unit(.4, "cm"),
+        legend.text = element_text(color = "black", size = 7), 
+        
+        axis.text.x = element_text(angle = 40, vjust = 1, hjust=1, color = "black", size = 10),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(size = 10), 
+        plot.title = element_text(size = 10)) +
+  labs(y = "Differentially abundant proteins (%)", x = element_blank()) + 
+  coord_flip() +
+  theme(legend.position = "none")
+
+
+# add color labels
+group_colors = c("brown","brown", "lightskyblue3", "lightskyblue3", "mediumpurple")
+
+colorplot <- ggplot(df_yx, aes(x = 1, y = group, fill = group)) +
+  geom_tile() +
+  theme_void() +
+  scale_fill_manual(values= rev(group_colors)) +
+  theme(axis.text.y = element_text(color = "black", hjust = 1, size = 10),
+  legend.position = 'none')
+
+yx_cats_arrange <- ggarrange(colorplot, NULL, yx_cats, nrow = 1, align = "h", widths = c(0.8,-0.62,1), labels = c("B"))
+
+pdf("Fig_2B_categories.pdf")
+yx_cats_arrange
+dev.off()
+
+
+# XM-24
+df_xm <- read.csv("xm_categories_summary_fig2.csv")
+df_xm$group <- factor(df_xm$group, levels = c("30L vs 27R", "30L vs 30R", "27L vs 27R", "30L vs 27L", "30R vs 27R"))
+
+# plot:
+xm_cats <- ggplot(data=df_xm, aes(x= group, y = percent, fill = fct_reorder(category, percent))) +
+  geom_bar(stat="identity", position= 'stack', alpha = 0.95, width = 0.9, color = "black", size = 0.2) +
+  theme_classic() + 
+  ggtitle("Coastal XM-24") +
+  scale_fill_manual(breaks = c("Unknown", "Amino acid metabolism", "Cell wall and signaling", "Cofactor", "DNA", "Energy and redox", "Other metabolites", "Photosynthesis", "Purines, pyrimidines, nucleotides", "Regulatory system and stress", "Respiration", "S and N metabolism", "Transcription", "Translation", "Transporters"), values = colors) + 
+  theme(legend.position = "none", 
+        legend.title = element_blank(), 
+        legend.key.size = unit(.4, "cm"),
+        legend.text = element_text(color = "black", size = 7), 
+        
+        axis.text.x = element_text(angle = 40, vjust = 1, hjust=1, color = "black", size = 10),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(size = 10), 
+        plot.title = element_text(size = 10)) +
+  labs(y = "Differentially abundant proteins (%)", x = element_blank()) + 
+  coord_flip() +
+  theme(legend.position = "none")
+
+
+xm_cats_arrange <- ggarrange(colorplot, NULL, xm_cats, nrow = 1, align = "h", widths = c(0.8,-0.62,1), labels = c("C"))
+
+pdf("Fig_2C_categories.pdf")
+xm_cats_arrange
+dev.off()
+
+# finalized in Affinity Designer 
+
+# extracting legend (change legend.position = "bottom")
+leg <- get_legend(yx_cats)
+pdf("Fig_2BC_legend.pdf", width = 7, height = 1)
+grid::grid.draw(leg)
+dev.off() # legend rearranged to fit figure in Affinity Designer
+```
+
+
+#### Venn diagrams of the Fe limitation and the interaction scenarios [Fig 3A, 3B]
+```{r, message=FALSE, warning=FALSE}
+# YX04-1 :
+# load differentially abundant proteins dfs for each of the 3 comparisons
+yx_27L <- read.csv("YX_27Lvs27R_DAPs_categories.csv", check.names = FALSE)
+yx_27L_daps <- yx_27L$KO
+
+yx_30L30R <- read.csv("YX_30Lvs30R_DAPs_categories.csv", check.names = FALSE)
+yx_30L30R_daps <- yx_30L30R$KO
+
+yx_30L <- read.csv("YX_30Lvs27R_DAPs_categories.csv", check.names = FALSE)
+yx_30L_daps <- yx_30L$KO
+
+
+# make venn diagram
+yx <- list("27L vs 27R" = yx_27L_daps, "30L vs 30R" = yx_30L30R_daps, "30L vs 27R" = yx_30L_daps)
+colors <- c("lightskyblue", "lightskyblue", "mediumpurple")
+
+venn_yx <- ggvenn(yx, fill_color = colors, fill_alpha = 0.7, 
+                      stroke_size = 1, set_name_size = 4, text_size = 4, 
+                      digits = 0, show_percentage = FALSE) +
+  ggtitle("Oceanic YX04-1") +
+  theme(plot.title = element_text(size = 11, hjust = 0.5))
+
+
+# XM-24:
+# load differentially abundant proteins dfs for each of the 3 comparisons
+xm_27L <- read.csv("XM_27Lvs27R_DAPs_categories.csv", check.names = FALSE)
+xm_27L_daps <- xm_27L$KO
+
+xm_30L30R <- read.csv("XM_30Lvs30R_DAPs_categories.csv", check.names = FALSE)
+xm_30L30R_daps <- xm_30L30R$KO
+
+xm_30L <- read.csv("XM_30Lvs27R_DAPs_categories.csv", check.names = FALSE)
+xm_30L_daps <- xm_30L$KO
+
+# make venn diagram
+xm <- list("27L vs 27R" = xm_27L_daps, "30L vs 30R" = xm_30L30R_daps, "30L vs 27R" = xm_30L_daps)
+colors <- c("lightskyblue", "lightskyblue", "mediumpurple")
+
+venn_xm <- ggvenn(xm, fill_color = colors, fill_alpha = 0.7, 
+                      stroke_size = 1, set_name_size = 4, text_size = 4, 
+                      digits = 0, show_percentage = FALSE) +
+  ggtitle("Coastal XM-24") +
+  theme(plot.title = element_text(size = 11, hjust = 0.5))
+
+# arrange and save venn diagrams 
+fig3AB_arrange <- ggarrange(venn_yx, venn_xm, nrow = 1, ncol = 2, 
+                            labels = c("A", "B"), align = "h") 
+
+pdf("Fig_3AB_Venn.pdf", width = 7.086, height = 3)
+fig3AB_arrange
+dev.off()
+```
+
+
+#### Functional categories of the 3 comparison groups [Fig 3C]
+```{r, message=FALSE, warning=FALSE}
+# load data for each strain:
+yx_cats <- read.csv("yx_groups_categories_fig3.csv")
+
+xm_cats <- read.csv("xm_groups_categories_fig3.csv")
+
+cats_both <- rbind(yx_cats, xm_cats)
+cats_both$category <- factor(cats_both$category, levels = c("Unknown", "Amino acid metabolism", "Cell wall and signaling", "Cofactor", "DNA", "Energy and redox", "Other metabolites", "Photosynthesis", "Purines, pyrimidines, nucleotides", "Regulatory system and stress", "Respiration", "S and N metabolism", "Transcription", "Translation", "Transporters"))
+
+fig_3C <- ggplot(cats_both, aes(x = percent, y = fct_rev(category), fill = strain)) +
+  geom_bar(stat = "identity", position = position_dodge(0.7), color = "black", width = 0.6) +
+  facet_grid(~ factor(group, levels=c('Shared Fe lim', 'Warm Fe lim', 
+                                          'Unique interaction')), scales = "free") +
+  scale_fill_manual(values = c("white", "black")) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA, size = 1), 
+        strip.background = element_rect(colour="black", fill= "white", size = 1), 
+        strip.text.x = element_text(size = 10, color = "black"), 
+        
+        axis.text.x = element_text(color = "black", size = 10),
+        axis.text.y = element_blank(),
+        axis.ticks.length.y = unit(0, "cm"),
+        axis.title.x = element_text(size = 10),
+        
+        legend.text = element_text(size = 8), 
+        legend.title = element_text(size = 8), 
+        legend.key.size = unit(0.4, "cm")) +
+  labs(y = "", x = "Differentially abundant proteins (%)") +
+  guides(fill=guide_legend(title="Strain", reverse = TRUE))
+
+
+pdf("Fig_3C_sansColors.pdf", width = 4.92, height = 3.7)
+fig_3C
+dev.off()
+
+# add colors panel
+colors <- nord(palette = "aurora") 
+colors_2 <- nord(palette = "algoma_forest")
+colors <- c(colors, colors_2)
+colors <- c("lightgrey", colors, "wheat1", "darkblue")
+
+
+colorplot <- ggplot(cats_both, aes(x = 1, y = fct_rev(category), fill = category)) +
+  geom_tile() +
+  theme_void() +
+  scale_fill_manual(values=colors) +
+  theme(axis.text.y = element_text(color = "black", hjust = 1, size = 8),
+  legend.position = 'none')
+
+pdf("Fig_3C_colorplot.pdf", height = 3.8)
+colorplot
+dev.off()
+
+# colorplot arranged in Affinity Designer
+```
