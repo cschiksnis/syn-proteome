@@ -1,0 +1,46 @@
+category,count,percent,group,strain
+Unknown,5,5.319148936,Shared Fe lim,YX04-1
+Amino acid metabolism,11,11.70212766,Shared Fe lim,YX04-1
+Cell wall and signaling,6,6.382978723,Shared Fe lim,YX04-1
+Cofactor,0,0,Shared Fe lim,YX04-1
+DNA,4,4.255319149,Shared Fe lim,YX04-1
+Energy and redox,4,4.255319149,Shared Fe lim,YX04-1
+Other metabolites,2,2.127659574,Shared Fe lim,YX04-1
+Photosynthesis,11,11.70212766,Shared Fe lim,YX04-1
+"Purines, pyrimidines, nucleotides",8,8.510638298,Shared Fe lim,YX04-1
+Regulatory system and stress,8,8.510638298,Shared Fe lim,YX04-1
+Respiration,10,10.63829787,Shared Fe lim,YX04-1
+S and N metabolism,3,3.191489362,Shared Fe lim,YX04-1
+Transcription,5,5.319148936,Shared Fe lim,YX04-1
+Translation,14,14.89361702,Shared Fe lim,YX04-1
+Transporters,3,3.191489362,Shared Fe lim,YX04-1
+Unknown,8,13.79310345,Warm Fe lim,YX04-1
+Amino acid metabolism,6,10.34482759,Warm Fe lim,YX04-1
+Cell wall and signaling,10,17.24137931,Warm Fe lim,YX04-1
+Cofactor,0,0,Warm Fe lim,YX04-1
+DNA,0,0,Warm Fe lim,YX04-1
+Energy and redox,1,1.724137931,Warm Fe lim,YX04-1
+Other metabolites,0,0,Warm Fe lim,YX04-1
+Photosynthesis,5,8.620689655,Warm Fe lim,YX04-1
+"Purines, pyrimidines, nucleotides",3,5.172413793,Warm Fe lim,YX04-1
+Regulatory system and stress,5,8.620689655,Warm Fe lim,YX04-1
+Respiration,4,6.896551724,Warm Fe lim,YX04-1
+S and N metabolism,4,6.896551724,Warm Fe lim,YX04-1
+Transcription,2,3.448275862,Warm Fe lim,YX04-1
+Translation,9,15.51724138,Warm Fe lim,YX04-1
+Transporters,1,1.724137931,Warm Fe lim,YX04-1
+Unknown,2,15.38461538,Unique interaction,YX04-1
+Amino acid metabolism,1,7.692307692,Unique interaction,YX04-1
+Cell wall and signaling,1,7.692307692,Unique interaction,YX04-1
+Cofactor,0,0,Unique interaction,YX04-1
+DNA,0,0,Unique interaction,YX04-1
+Energy and redox,0,0,Unique interaction,YX04-1
+Other metabolites,0,0,Unique interaction,YX04-1
+Photosynthesis,5,38.46153846,Unique interaction,YX04-1
+"Purines, pyrimidines, nucleotides",1,7.692307692,Unique interaction,YX04-1
+Regulatory system and stress,0,0,Unique interaction,YX04-1
+Respiration,0,0,Unique interaction,YX04-1
+S and N metabolism,0,0,Unique interaction,YX04-1
+Transcription,0,0,Unique interaction,YX04-1
+Translation,3,23.07692308,Unique interaction,YX04-1
+Transporters,0,0,Unique interaction,YX04-1
