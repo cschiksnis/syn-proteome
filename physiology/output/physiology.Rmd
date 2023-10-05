@@ -1,0 +1,307 @@
+---
+title: "Synechococcus Proteome Physiology"
+author: "Cara Schiksnis"
+date: "5/19/23"
+output: html_notebook
+---
+
+### Description: Physiology statistics and visualizations
+
+**Load packages:**
+```{r, results='hide', message=FALSE, warning=FALSE}
+if(!require(multcompView)){install.packages("multcompView")}
+if(!require(ggplot2)){install.packages("ggplot2")}
+if(!require(ggpubr)){install.packages("ggpubr")}
+if(!require(dplyr)){install.packages("dplyr")}
+if(!require(stringr)){install.packages("stringr")}
+
+library(multcompView)
+library(ggplot2)
+library(ggpubr)
+library(dplyr)
+library(stringr)
+```
+
+#### Stats for within-strain comparisons:
+
+#### YX04-1:
+
+**Growth rates:**
+```{r, message=FALSE, warning=FALSE}
+# prep growth rate df
+yx_phys <- read.csv("YX04-1_Physiology.csv")
+yx_physGR <- yx_phys[,c(1:2)] # keep sample and growth rate columns
+yx_physGR$Temperature <- as.factor(substr(yx_physGR$Sample, 1,2)) # add columns for temperature and iron
+yx_physGR$Iron <- substr(yx_physGR$Sample, 3,3)
+yx_physGR$Iron <- as.factor(yx_physGR$Iron)
+
+# calculate statistically significant differences between means (within strain)
+yx_aovGR <- aov(Growth_rate ~ Temperature * Iron, data = yx_physGR) # two way anova
+yx_tukeyGR <- TukeyHSD(yx_aovGR) # tukey's post hoc
+
+# save tukey results 
+tukey_df <- as.data.frame(yx_tukeyGR$`Temperature:Iron`) 
+tukey_df <- tibble::rownames_to_column(tukey_df, "Comparison")
+write.csv(tukey_df, "Tukey_GRs_withinStrain_YX04-1.csv")
+#writexl::write_xlsx(tukey_df, "Tukey_GRs_withinStrain_YX04-1.xlsx")
+```
+
+**Fe:P ratios:**
+```{r, message=FALSE, warning=FALSE}
+# prep Fe:P df
+yx_phys <- read.csv("YX04-1_Physiology.csv")
+yx_physFeP <- yx_phys[,c(1,4)] # keep sample and Fe:P columns
+yx_physFeP$Temperature <- as.factor(substr(yx_physFeP$Sample, 1,2)) # add columns for temperature and iron
+yx_physFeP$Iron <- substr(yx_physFeP$Sample, 3,3)
+yx_physFeP$Iron <- as.factor(yx_physFeP$Iron)
+
+# calculate statistically significant differences between means (within strain)
+yx_aovFeP <- aov(Fe_P ~ Temperature * Iron, data = yx_physFeP) # two way anova
+yx_tukeyFeP <- TukeyHSD(yx_aovFeP) # tukey's post hoc
+
+# save tukey results 
+tukey_df <- as.data.frame(yx_tukeyFeP$`Temperature:Iron`) 
+tukey_df <- tibble::rownames_to_column(tukey_df, "Comparison")
+write.csv(tukey_df, "Tukey_FeP_withinStrain_YX04-1.csv")
+#writexl::write_xlsx(tukey_df, "Tukey_FeP_withinStrain_YX04-1.xlsx")
+```
+
+#### XM-24:
+
+**Growth rates:**
+```{r, message=FALSE, warning=FALSE}
+# prep growth rate df
+xm_phys <- read.csv("XM-24_Physiology.csv")
+xm_physGR <- xm_phys[,c(1:2)] # keep sample and growth rate columns
+xm_physGR$Temperature <- as.factor(substr(xm_physGR$Sample, 1,2)) # add columns for temperature and iron
+xm_physGR$Iron <- substr(xm_physGR$Sample, 3,3)
+xm_physGR$Iron <- as.factor(xm_physGR$Iron)
+
+# calculate statistically significant differences between means (within strain)
+xm_aovGR <- aov(Growth_rate ~ Temperature * Iron, data = xm_physGR) # two way anova
+xm_tukeyGR <- TukeyHSD(xm_aovGR) # tukey's post hoc
+
+# save tukey results 
+tukey_df <- as.data.frame(xm_tukeyGR$`Temperature:Iron`) 
+tukey_df <- tibble::rownames_to_column(tukey_df, "Comparison")
+write.csv(tukey_df, "Tukey_GRs_withinStrain_XM-24.csv")
+#writexl::write_xlsx(tukey_df, "Tukey_GRs_withinStrain_XM-24.xlsx")
+```
+
+**Fe:P ratios:**
+```{r, message=FALSE, warning=FALSE}
+# prep Fe:P df
+xm_phys <- read.csv("XM-24_Physiology.csv")
+xm_physFeP <- xm_phys[,c(1,4)] # keep sample and Fe:P columns
+xm_physFeP$Temperature <- as.factor(substr(xm_physFeP$Sample, 1,2)) # add columns for temperature and iron
+xm_physFeP$Iron <- substr(xm_physFeP$Sample, 3,3)
+xm_physFeP$Iron <- as.factor(xm_physFeP$Iron)
+
+xm_physFeP <- na.omit(xm_physFeP) # remove missing replicate (27R3)
+
+# calculate statistically significant differences between means (within strain)
+xm_aovFeP <- aov(Fe_P ~ Temperature * Iron, data = xm_physFeP) # two way anova
+xm_tukeyFeP <- TukeyHSD(xm_aovFeP) # tukey's post hoc
+
+# save tukey results 
+tukey_df <- as.data.frame(xm_tukeyFeP$`Temperature:Iron`) 
+tukey_df <- tibble::rownames_to_column(tukey_df, "Comparison")
+write.csv(tukey_df, "Tukey_FeP_withinStrain_XM-24.csv")
+#writexl::write_xlsx(tukey_df, "Tukey_FeP_withinStrain_XM-24.xlsx")
+```
+
+#### Stats for between-strain comparisons:
+
+**Growth rates:**
+```{r,message=FALSE, warning=FALSE}
+# load and format YX04-1 growth rates
+yx_phys <- read.csv("YX04-1_Physiology.csv")
+yx_physGR <- yx_phys[,c(1:2)] # keep sample and growth rate columns
+yx_physGR$Temperature <- substr(yx_physGR$Sample, 1,2) # add temperature and iron
+yx_physGR$Iron <- substr(yx_physGR$Sample, 3,3)
+
+yx_physGR$Sample <- paste(yx_physGR$Sample, "yx", sep = "_") # label sample and temperatures with strain (for anova)
+yx_physGR$Temperature <- paste(yx_physGR$Temperature, "yx", sep = "_")
+yx_physGR$Temperature <- as.factor(yx_physGR$Temperature)
+
+# load and format XM-24 growth rates
+xm_phys <- read.csv("XM-24_Physiology.csv")
+xm_physGR <- xm_phys[,c(1:2)] # keep sample and growth rate columns
+xm_physGR$Temperature <- substr(xm_physGR$Sample, 1,2) # add temperature and iron
+xm_physGR$Iron <- substr(xm_physGR$Sample, 3,3)
+
+xm_physGR$Sample <- paste(xm_physGR$Sample, "xm", sep = "_") # label sample and temperatures with strain (for anova)
+xm_physGR$Temperature <- paste(xm_physGR$Temperature, "xm", sep = "_")
+xm_physGR$Temperature <- as.factor(xm_physGR$Temperature)
+
+# combine strains into one df
+phys_GR <- rbind(yx_physGR, xm_physGR)
+
+aov_GR <- aov(Growth_rate ~ Temperature * Iron, data = phys_GR) # two way anova
+tukey_GR <- TukeyHSD(aov_GR) # tukey's post hoc
+
+cld_GR <- multcompLetters4(aov_GR, tukey_GR) # get letters of significance
+cld_GR <- data.frame(letters = cld_GR$`Temperature:Iron`$Letters)
+
+# calculate mean and sd of each treatment 
+physGR_sum <- phys_GR %>% 
+  group_by(Temperature, Iron) %>% 
+  dplyr::summarise(
+    Mean_GR = mean(Growth_rate),
+    sd = sd(Growth_rate), 
+    .groups = 'drop'
+    ) %>%
+  arrange(desc(Mean_GR)) 
+
+# add letters of significance from cld
+physGR_sum$LetterBoth <- cld_GR$letter
+
+# add column for strain 
+physGR_sum$Strain <- ifelse(grepl("yx", physGR_sum$Temperature), "YX04-1", "XM-24")
+physGR_sum$Temperature <- str_sub(physGR_sum$Temperature, end=2)
+
+# save
+write.csv(physGR_sum, "GRs_betweenStrain_letters.csv", row.names = FALSE)
+```
+
+**Fe:P ratios:**
+```{r}
+# load and format YX04-1 Fe:P ratios
+yx_phys <- read.csv("YX04-1_Physiology.csv")
+yx_physFeP <- yx_phys[,c(1,4)] # keep sample and growth rate columns
+yx_physFeP$Temperature <- substr(yx_physFeP$Sample, 1,2) # add temperature and iron
+yx_physFeP$Iron <- substr(yx_physFeP$Sample, 3,3)
+
+yx_physFeP$Sample <- paste(yx_physFeP$Sample, "yx", sep = "_") # label sample and temperatures with strain (for anova)
+yx_physFeP$Temperature <- paste(yx_physFeP$Temperature, "yx", sep = "_")
+yx_physFeP$Temperature <- as.factor(yx_physFeP$Temperature)
+
+# load and format XM-24 Fe:P ratios
+xm_phys <- read.csv("XM-24_Physiology.csv")
+xm_physFeP <- xm_phys[,c(1,4)] # sample and growth rate columns
+xm_physFeP$Temperature <- substr(xm_physFeP$Sample, 1,2) # add temperature and iron
+xm_physFeP$Iron <- substr(xm_physFeP$Sample, 3,3)
+
+xm_physFeP$Sample <- paste(xm_physFeP$Sample, "xm", sep = "_") # label sample and temperatures with strain (for anova)
+xm_physFeP$Temperature <- paste(xm_physFeP$Temperature, "xm", sep = "_")
+xm_physFeP$Temperature <- as.factor(xm_physFeP$Temperature)
+xm_physFeP <- na.omit(xm_physFeP) # remove missing sample (27R3)
+
+# combine strains into one df
+phys_FeP <- rbind(yx_physFeP, xm_physFeP)
+
+aov_FeP <- aov(Fe_P ~ Temperature * Iron, data = phys_FeP) # two way anova
+tukey_FeP <- TukeyHSD(aov_FeP) # tukey's post hoc
+
+cld_FeP <- multcompLetters4(aov_FeP, tukey_FeP) # get letters of significance
+cld_FeP <- data.frame(letters = cld_FeP$`Temperature:Iron`$Letters)
+
+# calculate mean and sd of each treatment 
+physFeP_sum <- phys_FeP %>% 
+  group_by(Temperature, Iron) %>% 
+  dplyr::summarise(
+    Mean_FeP = mean(Fe_P),
+    sd = sd(Fe_P), 
+    .groups = 'drop'
+    ) %>%
+  arrange(desc(Mean_FeP)) 
+
+# add letters of significance from cld
+physFeP_sum$LetterBoth <- cld_FeP$letter
+
+# add column for strain  
+physFeP_sum$Strain <- ifelse(grepl("yx", physFeP_sum$Temperature), "YX04-1", "XM-24")
+physFeP_sum$Temperature <- str_sub(physFeP_sum$Temperature, end=2)
+
+# save
+write.csv(physFeP_sum, "FeP_betweenStrain_letters.csv", row.names = FALSE)
+```
+
+#### Plot all together, with both between/ within strain stats:
+##### [Figure 1]
+```{r, message=FALSE, warning=FALSE}
+# The adjusted p values from the Tukey tests were used to determine the significance thresholds for the within-strain comparisons (denoted by lines and * on the plot via Affinity Designer). The letters from cld for the between-strain comparisons were used to annotate each treatment with letters (via geom_text)
+
+# load dfs with letter stats for between-strain comparisons (generated in above code)
+fig_1_GR_df <- read.csv("GRs_betweenStrain_letters.csv")
+fig_1_FeP_df <- read.csv("FeP_betweenStrain_letters.csv")
+
+# format for plotting
+fig_1_GR_df$Temperature <- as.factor(fig_1_GR_df$Temperature)
+fig_1_GR_df$Iron <- gsub("L", "Limited", fig_1_GR_df$Iron)
+fig_1_GR_df$Iron <- gsub("R", "Replete", fig_1_GR_df$Iron)
+fig_1_GR_df$Iron <- factor(fig_1_GR_df$Iron, levels = c("Replete", "Limited"))
+fig_1_GR_df$Strain <- gsub("YX04-1", "Oceanic YX04-1", fig_1_GR_df$Strain)
+fig_1_GR_df$Strain <- gsub("XM-24", "Coastal XM-24", fig_1_GR_df$Strain)
+
+fig_1_FeP_df$Temperature <- as.factor(fig_1_FeP_df$Temperature)
+fig_1_FeP_df$Iron <- gsub("L", "Limited", fig_1_FeP_df$Iron)
+fig_1_FeP_df$Iron <- gsub("R", "Replete", fig_1_FeP_df$Iron)
+fig_1_FeP_df$Iron <- factor(fig_1_FeP_df$Iron, levels = c("Replete", "Limited"))
+fig_1_FeP_df$Strain <- gsub("YX04-1", "Oceanic YX04-1", fig_1_FeP_df$Strain)
+fig_1_FeP_df$Strain <- gsub("XM-24", "Coastal XM-24", fig_1_FeP_df$Strain)
+
+# plot GRs
+fig_1_GR <- ggplot(fig_1_GR_df, aes(x = Temperature, y = Mean_GR, fill = Iron)) +
+  geom_bar(stat = "identity", position = position_dodge(0.6), 
+           color = "black", linewidth = 0.6, width = 0.6, alpha = 1) +
+  facet_grid(~ factor(Strain, levels = c("Oceanic YX04-1", "Coastal XM-24")),
+              scales = "free") +
+  scale_fill_manual(values = c("black", "lightgrey")) +
+  geom_errorbar(aes(ymin = Mean_GR, ymax = Mean_GR + sd), position = position_dodge(0.6), width = 0.1) + 
+  geom_text(aes(label = LetterBoth), size = 3, position = position_dodge(0.6), vjust = -0.45, hjust = -0.6) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black"),
+        panel.border = element_blank(),
+        strip.background = element_rect(colour="black", fill= "white", size = 1), 
+        strip.text.x = element_text(size = 12, color = "black"),
+        strip.text.y = element_text(size = 12, color = "black"),
+        axis.title = element_text(size = 12, color = "black"), 
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.text.x = element_text(size = 10, color = "black"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10),
+        legend.position = c(0.43, 0.8), 
+        legend.box.background = element_rect(color = "black", size = 1)) +
+  labs(x = "Temperature (°C)", y = expression("Growth rate" ~ (d^{-1})))
+
+
+# plot Fe:P
+fig_1_FeP <- ggplot(fig_1_FeP_df, aes(x = Temperature, y = Mean_FeP, fill = Iron)) +
+  geom_bar(stat = "identity", position = position_dodge(0.6), 
+           color = "black", linewidth = 0.6, width = 0.6, alpha = 1) +
+  facet_grid(~ factor(Strain, levels = c("Oceanic YX04-1", "Coastal XM-24")),
+              scales = "free") +
+  scale_fill_manual(values = c("black", "lightgrey")) +
+  geom_errorbar(aes(ymin = Mean_FeP, ymax = Mean_FeP + sd), position = position_dodge(0.6), width = 0.1) + 
+  geom_text(aes(label = LetterBoth), size = 3, position = position_dodge(0.6), vjust = -0.45, hjust = -0.6) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black"),
+        panel.border = element_blank(),
+        strip.background = element_rect(colour="black", fill= "white", size = 1), 
+        strip.text.x = element_text(size = 12, color = "black"),
+        strip.text.y = element_text(size = 12, color = "black"),
+        axis.title = element_text(size = 12, color = "black"), 
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.text.x = element_text(size = 10, color = "black"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10),
+        legend.position = "none", 
+        legend.box.background = element_rect(color = "black", size = 1)) +
+  labs(x = "Temperature (°C)", y = "Fe:P (mmol/ mol)") 
+
+
+
+phys_arrange <- ggarrange(fig_1_GR, fig_1_FeP, 
+                          nrow = 2, 
+                          align = "v", 
+                          labels = c("A", "B"), 
+                          font.label = list(size = 12))
+
+
+pdf("Physiology_Facet.pdf", width = 7.086, height = 6.5)
+phys_arrange
+dev.off()
+```
