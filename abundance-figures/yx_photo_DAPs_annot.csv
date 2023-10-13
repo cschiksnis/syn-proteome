@@ -1,0 +1,30 @@
+KO,KOName,comparison,annot
+K00228,coproporphyrinogen III oxidase ,"27Lvs27R,30Lvs30R,30Lvs27R",Chlorophyll
+K00514,zeta-carotene desaturase ,30Lvs30R,Other
+K01599,uroporphyrinogen decarboxylase ,"27Lvs27R,30Lvs30R,30Lvs27R",Chlorophyll
+K01698,porphobilinogen synthase ,"30Lvs30R,30Lvs27R",Chlorophyll
+K02094,phycobilisome core linker protein,"30Lvs30R,30Lvs27R",PBS
+K02095,allophycocyanin-B,"27Lvs27R,30Lvs30R,30Lvs27R",PBS
+K02097,phycobilisome core component,"27Lvs27R,30Lvs30R,30Lvs27R",PBS
+K02109,F-type H+-transporting ATPase subunit b,"27Lvs27R,30Lvs30R,30Lvs27R",Other
+K02285,phycocyanin beta chain,30Lvs30R,PBS
+K02286,phycocyanin-associated rod linker protein,30Lvs27R,PBS
+K02634,apocytochrome f,30Lvs30R,ETC
+K02635,cytochrome b6,30Lvs30R,ETC
+K02637,cytochrome b6-f complex subunit 4,"27Lvs27R,30Lvs30R,30Lvs27R",ETC
+K02639,ferredoxin,"30Lvs30R,30Lvs27R",ETC
+K02641,ferredoxin--NADP+ reductase ,27Lvs27R,ETC
+K02693,photosystem I subunit IV,"30Lvs30R,30Lvs27R",PSI
+K02699,photosystem I subunit XI,30Lvs30R,PSI
+K02705,photosystem II CP43 chlorophyll apoprotein,30Lvs27R,PSII
+K02720,photosystem II cytochrome c550,"27Lvs27R,30Lvs30R,30Lvs27R",PSII
+K03405,magnesium chelatase subunit I ,"27Lvs27R,30Lvs30R,30Lvs27R",Chlorophyll
+K04035,magnesium-protoporphyrin IX monomethyl ester (oxidative) cyclase ,30Lvs27R,Chlorophyll
+K04755,"ferredoxin, 2Fe-2S","27Lvs27R,30Lvs30R,30Lvs27R",ETC
+K05377,phycoerythrin beta chain,30Lvs30R,PBS
+K05380,phycoerythrin-associated linker protein,"27Lvs27R,30Lvs30R,30Lvs27R",PBS
+K08903,photosystem II 13kDa protein,"30Lvs30R,30Lvs27R",PSII
+K10960,geranylgeranyl diphosphate/geranylgeranyl-bacteriochlorophyllide a reductase ,"27Lvs27R,30Lvs30R,30Lvs27R",Chlorophyll
+K13789,"geranylgeranyl diphosphate synthase, type II ",30Lvs30R,Chlorophyll
+LKDHAOIP_00112,Ycf48-like protein,30Lvs27R,PSII
+LKDHAOIP_00939,Protein Thf1,30Lvs27R,PSII
