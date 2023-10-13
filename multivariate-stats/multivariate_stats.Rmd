@@ -1,0 +1,235 @@
+---
+title: "Synechococcus Proteome Multivariate Stats"
+author: "Cara Schiksnis"
+date: "5/22/23"
+output: html_notebook
+---
+
+### Description: Multivariate stats (PCA, Anova-like permutation test) and visualizations
+
+**Load packages:**
+```{r, results='hide', message=FALSE, warning=FALSE}
+if(!require(vegan)){install.packages("vegan")}
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(ggplot2)){install.packages("ggplot2")}
+if(!require(ggpubr)){install.packages("ggpubr")}
+
+library(vegan)
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+```
+
+#### YX04-1:
+
+**PCA:**
+```{r, message=FALSE, warning=FALSE}
+# load protein data for YX04-1
+oo <- read.csv("oo_protein_data.csv", check.names = FALSE)
+
+# prep for unconstrained RDA
+data_forrda_yx <- oo[1:13] # select KO column and all sample columns
+rownames(data_forrda_yx) <- data_forrda_yx$KO # KOs as row names
+data_forrda_yx$KO <- NULL
+data_forrda_yx <- t(data_forrda_yx) # transpose 
+data_forrda_yx_log <- log(data_forrda_yx+1) # log transform
+
+# load environment data
+env_data <- read.csv("env_for_rda.csv")
+rownames(env_data) <- env_data$Sample # samples as row names
+env_data$Sample <- NULL
+colnames(env_data) <- c("Temperature", "-Fe") # rename iron column
+
+# unconstrained RDA
+pca <- rda(data_forrda_yx_log, distance = "euclidean") 
+
+# fit environmental conditions to pca
+ef <- envfit(pca, env_data, permu = 999) # fit environmental conditions to pca
+plot(pca); plot(ef, col = 'red')
+
+ef.score <- scores(ef, "vectors", choices = 1:2) # extract environmental fit scores
+efvec <- ef.score * ordiArrowMul(ef) # multiply environmental fit scores to fit plot
+
+# extract pca scores and combine with environmental vector scores
+scores <-scores(pca) 
+scores <- data.frame(scores$sites)
+uscores <- inner_join(rownames_to_column(data.frame(data_forrda_yx_log)), rownames_to_column(data.frame(scores)), by = "rowname")
+vscores <- as.data.frame(efvec)
+vscores$env<-rownames(vscores)
+
+eig<- eigenvals(pca)
+eig<- eig / sum(eig) 
+eig # displays the % variation explained by each component/axis
+
+# prep for plotting
+env_data$`-Fe` <- gsub("1", "Limited", env_data$`-Fe`)
+env_data$`-Fe` <- gsub("0", "Replete", env_data$`-Fe`)
+
+# plot PCA 
+mycolors <- c("#B63679FF", "#FB8861FF")
+
+yx_pca_plot <- ggplot(uscores) + 
+  geom_point(aes(x = PC1, y = PC2, color = factor(env_data$Temperature),
+                 shape = factor(env_data$`-Fe`)), size =4, alpha = 0.8) +
+  geom_segment(data = vscores, aes(x = 0, y = 0, xend = PC1, yend = PC2)) +
+  geom_label(data=vscores, aes(x=PC1, y=PC2, label = env), label.size = NA, position = position_nudge(x=.2, y =.1)) +
+  scale_shape_manual(values = c(19,17)) + 
+  scale_color_manual(values=mycolors) +
+  theme_bw() +
+  theme(axis.line = element_line(color='black'),
+        plot.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(), 
+        legend.position = "right", 
+        axis.text = element_text(size = 10), 
+        axis.title = element_text(size = 12)) +
+  guides(color=guide_legend("Temperature (°C)"), shape=guide_legend("Iron")) +
+  xlab("PC1 (74%)") +ylab("PC2 (7%)") +
+  ggtitle("YX04-1") +
+  coord_fixed(ratio = 1)
+
+yx_pca_plot
+
+#pdf("YX04-1_PCA.pdf", width = 7.08)
+#yx_pca_plot
+#dev.off()
+```
+
+
+**Anova-like permutation test on constrained RDA**
+```{r, message=FALSE, warning=FALSE}
+# load protein data for YX04-1
+oo <- read.csv("oo_protein_data.csv", check.names = FALSE)
+
+# prep df
+data_forrda_yx <- oo[1:13] # select KO column and all sample columns
+rownames(data_forrda_yx) <- data_forrda_yx$KO # KOs as row names
+data_forrda_yx$KO <- NULL
+data_forrda_yx <- t(data_forrda_yx) # transpose 
+
+# load environment data
+env_data <- read.csv("env_for_rda.csv")
+rownames(env_data) <- env_data$Sample # samples as row names
+env_data$Sample <- NULL
+
+# constrained RDA
+rda_interactive <- rda(data_forrda_yx ~ Temperature * Iron, data = env_data)
+rda_interactive # 94.7% of variation is explained by temperature, Fe, and their interaction 
+RsquareAdj(rda_interactive) #Adj R2 = 0.93
+
+# anova on RDA
+anova.rda_interactive.term <- anova.cca(rda_interactive, step = 1000, by = "term")
+anova.rda_interactive.term # Fe contributes significantly to the RDA (p = 0), and temp and 
+                           # their interaction have p of 0.05
+```
+
+
+#### XM-24:
+
+**PCA:**
+```{r, message=FALSE, warning=FALSE}
+# load protein data for XM-24
+co <- read.csv("co_protein_data.csv", check.names = FALSE)
+
+# prep for unconstrained RDA
+data_forrda_xm <- co[1:13] # select KO column and all sample columns
+rownames(data_forrda_xm) <- data_forrda_xm$KO # KOs as row names
+data_forrda_xm$KO <- NULL
+data_forrda_xm <- t(data_forrda_xm) # transpose 
+data_forrda_xm_log <- log(data_forrda_xm+1) # log transform
+
+# load environment data
+env_data <- read.csv("env_for_rda.csv")
+rownames(env_data) <- env_data$Sample # samples as row names
+env_data$Sample <- NULL
+colnames(env_data) <- c("Temperature", "-Fe") # rename iron column
+
+# unconstrained RDA
+pca <- rda(data_forrda_xm_log, distance = "euclidean") 
+
+# fit environmental conditions to pca
+ef <- envfit(pca, env_data, permu = 999) # fit environmental conditions to pca
+plot(pca); plot(ef, col = 'red')
+
+ef.score <- scores(ef, "vectors", choices = 1:2) # extract environmental fit scores
+efvec <- ef.score * ordiArrowMul(ef) # multiply environmental fit scores to fit plot
+
+# extract pca scores and combine with environmental vector scores
+scores <-scores(pca) 
+scores <- data.frame(scores$sites)
+uscores <- inner_join(rownames_to_column(data.frame(data_forrda_xm_log)), rownames_to_column(data.frame(scores)), by = "rowname")
+vscores <- as.data.frame(efvec)
+vscores$env<-rownames(vscores)
+
+eig<- eigenvals(pca)
+eig<- eig / sum(eig) 
+eig # displays the % variation explained by each component/axis
+
+# prep for plotting
+env_data$`-Fe` <- gsub("1", "Limited", env_data$`-Fe`)
+env_data$`-Fe` <- gsub("0", "Replete", env_data$`-Fe`)
+
+# plot PCA 
+mycolors <- c("#B63679FF", "#FB8861FF")
+
+xm_pca_plot <- ggplot(uscores) + 
+  geom_point(aes(x = PC1, y = PC2, color = factor(env_data$Temperature),
+                 shape = factor(env_data$`-Fe`)), size =4, alpha = 0.8) +
+  geom_segment(data = vscores, aes(x = 0, y = 0, xend = PC1, yend = PC2)) + 
+  geom_label(data=vscores, aes(x=PC1, y=PC2, label = env), label.size = NA, position = position_nudge(x=.2, y =.1)) +
+  scale_shape_manual(values = c(19,17)) +
+  scale_color_manual(values=mycolors) +
+  theme_bw() +
+  theme(axis.line = element_line(color='black'),
+        plot.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(), 
+        legend.position = "right", 
+        axis.text = element_text(size = 10), 
+        axis.title = element_text(size = 12)) +
+    guides(color=guide_legend("Temperature (°C)"), shape=guide_legend("Iron")) +
+  xlab("PC1 (49%)") +ylab("PC2 (11%)") +
+  ggtitle("XM-24") +
+  coord_fixed(ratio = 1)
+
+xm_pca_plot
+
+#pdf("XM-24_PCA.pdf", width = 7.08)
+#xm_pca_plot
+#dev.off()
+
+# combine pca plots
+pca_both <- ggarrange(yx_pca_plot, xm_pca_plot, labels = c("A", "B"), common.legend = TRUE, 
+                      legend = "bottom")
+# save
+pdf("PCA_both_resize.pdf", width = 7.08, height = 4.5)
+pca_both
+dev.off()
+```
+
+
+**Anova-like permutation test on constrained RDA**
+```{r, message=FALSE, warning=FALSE}
+# load protein data for XM-24
+co <- read.csv("co_protein_data.csv", check.names = FALSE)
+
+# prep df
+data_forrda_xm <- co[1:13] # select KO column and all sample columns
+rownames(data_forrda_xm) <- data_forrda_xm$KO # KOs as row names
+data_forrda_xm$KO <- NULL
+data_forrda_xm <- t(data_forrda_xm) # transpose 
+
+# load environment data
+env_data <- read.csv("env_for_rda.csv")
+rownames(env_data) <- env_data$Sample # samples as row names
+env_data$Sample <- NULL
+
+# constrained RDA
+rda_interactive <- rda(data_forrda_xm ~ Temperature * Iron, data = env_data)
+rda_interactive # 73.9% of variation is explained by temperature, Fe, and their interaction 
+RsquareAdj(rda_interactive) #Adj R2 = 0.64
+
+# anova on RDA
+anova.rda_interactive.term <- anova.cca(rda_interactive, step = 1000, by = "term")
+anova.rda_interactive.term # Fe contributes significantly to the RDA (p=0), the p value for temp is p=0.05, and their interaction is non-significant
+```
