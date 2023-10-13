@@ -1,0 +1,516 @@
+---
+title: "Synechococcus Proteome Abundance Plots"
+author: "Cara Schiksnis"
+date: "5/22/23"
+output: html_notebook
+---
+
+### Description: Box plots and heat maps of selected Fe response proteins (Figures 4 and 5 in text)
+
+**Load packages:**
+```{r, results='hide', message=FALSE, warning=FALSE}
+if(!require(ggplot2)){install.packages("ggplot2")}
+if(!require(multcompView)){install.packages("multcompView")}
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(pheatmap)){install.packages("pheatmap")}
+if(!require(RColorBrewer)){install.packages("RColorBrewer")}
+if(!require(ggpubr)){install.packages("ggpubr")}
+if(!require(matrixStats)){install.packages("matrixStats")}
+
+library(ggplot2)
+library(multcompView)
+library(tidyverse)
+library(pheatmap)
+library(RColorBrewer)
+library(ggpubr)
+library(matrixStats)
+```
+
+
+#### Box plots of stress proteins [Figure 4]
+```{r, message=FALSE, warning=FALSE}
+# load protein data for each strain
+oo <- read.csv("oo_protein_data.csv", check.names = FALSE) 
+
+co <- read.csv("co_protein_data.csv", check.names = FALSE) 
+
+# function for pulling out abundance data for protein of interest, returns formatted df 
+boxPlotDfFunction <- function(protein_KO, 
+                              data, 
+                              strain)
+{
+  protein_df <- data[data$KO == protein_KO,] # pull out protein abundance data for selected KO
+  protein_name <- protein_df$KODef # save protein name
+  protein_df <- subset(protein_df, select = c(2:13)) # select only protein abundance data
+  protein_df_long <- gather(protein_df, "Sample", "Abundance") 
+  protein_df_long$Temperature <- substr(protein_df_long$Sample, 1,2) # add temperature and Fe
+  protein_df_long$Temperature <- as.factor(protein_df_long$Temperature)
+  protein_df_long$Iron <- substr(protein_df_long$Sample, 3,3)
+  protein_df_long$Protein <- protein_name
+  protein_df_long$Strain <- strain
+  return(protein_df_long)
+}
+
+# run function for each protein/ strain:
+per_yx <- boxPlotDfFunction(protein_KO = "K03386", data = oo, strain = "YX04-1")
+per_yx$Protein <- "Peroxiredoxin"
+
+groes_yx <- boxPlotDfFunction(protein_KO = "K04078", data = oo, strain = "YX04-1")
+groes_yx$Protein <- "GroES"
+
+groel_yx <- boxPlotDfFunction(protein_KO = "K04077", data = oo, strain = "YX04-1")
+groel_yx$Protein <- "GroEL"
+
+per_xm <- boxPlotDfFunction(protein_KO = "K03386", data = co, strain = "XM-24")
+per_xm$Protein <- "Peroxiredoxin"
+
+groes_xm <- boxPlotDfFunction(protein_KO = "K04078", data = co, strain = "XM-24")
+groes_xm$Protein <- "GroES"
+
+groel_xm <- boxPlotDfFunction(protein_KO = "K04077", data = co, strain = "XM-24")
+groel_xm$Protein <- "GroEL"
+
+# gather all into one df and prep for plotting
+facet_stress_df <- rbind(per_yx, groes_yx, groel_yx, 
+                      per_xm, groes_xm, groel_xm)
+facet_stress_df$Iron <- gsub("L", "Fe Limited", facet_stress_df$Iron)
+facet_stress_df$Iron <- gsub("R", "Fe Replete", facet_stress_df$Iron)
+facet_stress_df$Iron <- factor(facet_stress_df$Iron, levels = c("Fe Replete", "Fe Limited"))
+facet_stress_df$Strain <- gsub("YX04-1", "Oceanic YX04-1", facet_stress_df$Strain)
+facet_stress_df$Strain <- gsub("XM-24", "Coastal XM-24", facet_stress_df$Strain)
+
+# plot
+stress_abundance <- ggplot(facet_stress_df, aes(x = Iron, y = Abundance, fill = Temperature)) +
+  geom_boxplot(alpha = 0.8, lwd = 0.3) +
+  facet_grid(factor(Protein, levels = c("Peroxiredoxin", "GroES", "GroEL")) 
+             ~ factor(Strain, levels = c("Oceanic YX04-1", "Coastal XM-24")), scales = "free") +
+  scale_fill_manual(values = c("#B63679FF", "#FB8861FF")) +
+  theme_classic() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size=8, color = "black"),
+        axis.title.y = element_text(size = 8, color = "black"), 
+        axis.text.y = element_text(size = 8, color = "black"),
+        panel.border = element_rect(color = "black", fill=NA, size=0.5), 
+        strip.background=element_rect(color="black", fill= "white", size = 0.5),
+        strip.text.x = element_text(size = 8), 
+        strip.text.y = element_text(size = 8),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8),
+        legend.position = "bottom") +
+   labs(y = "Abundance") +
+  guides(fill=guide_legend(title="Temperature (°C)"))
+
+# save
+pdf("Fig_4_StressProteins.pdf", width = 3.33, height = 4.2)
+stress_abundance
+dev.off()
+
+
+# stats 
+# calculated here but added to box plots in affinity designer
+statsFunction <- function(protein_df)
+{anova <- aov(Abundance ~ Temperature * Iron, data = protein_df) 
+tukey <- TukeyHSD(anova)
+cld <- multcompLetters4(anova, tukey)
+cld <- data.frame(letters = cld$`Temperature:Iron`$Letters)
+return(cld)
+}
+
+# YX04-1
+yx_per_stats <- statsFunction(protein_df = per_yx)
+colnames(yx_per_stats) <- "Peroxiredoxin" # rename to protein name
+yx_per_stats$Treatment <- rownames(yx_per_stats) # add treatment column for merging
+rownames(yx_per_stats) <- NULL # remove row names
+
+yx_groes_stats <- statsFunction(protein_df = groes_yx)
+colnames(yx_groes_stats) <- "GroES"
+yx_groes_stats$Treatment <- rownames(yx_groes_stats)
+rownames(yx_groes_stats) <- NULL
+
+yx_groel_stats <- statsFunction(protein_df = groel_yx)
+colnames(yx_groel_stats) <- "GroEL"
+yx_groel_stats$Treatment <- rownames(yx_groel_stats)
+rownames(yx_groel_stats) <- NULL
+
+# merge into one df and save 
+yx_fig4_stats <- merge(yx_per_stats, yx_groes_stats, by = "Treatment")
+yx_fig4_stats <- merge(yx_fig4_stats, yx_groel_stats, by = "Treatment")
+write.csv(yx_fig4_stats, "YX_Fig4_Stats.csv")
+
+# XM-24
+xm_per_stats <- statsFunction(protein_df = per_xm)
+colnames(xm_per_stats) <- "Peroxiredoxin"
+xm_per_stats$Treatment <- rownames(xm_per_stats)
+rownames(xm_per_stats) <- NULL
+
+xm_groes_stats <- statsFunction(protein_df = groes_xm)
+colnames(xm_groes_stats) <- "GroES"
+xm_groes_stats$Treatment <- rownames(xm_groes_stats)
+rownames(xm_groes_stats) <- NULL
+
+xm_groel_stats <- statsFunction(protein_df = groel_xm)
+colnames(xm_groel_stats) <- "GroEL"
+xm_groel_stats$Treatment <- rownames(xm_groel_stats)
+rownames(xm_groel_stats) <- NULL
+
+# merge into one df and save
+xm_fig4_stats <- merge(xm_per_stats, xm_groes_stats, by = "Treatment")
+xm_fig4_stats <- merge(xm_fig4_stats, xm_groel_stats, by = "Treatment")
+write.csv(xm_fig4_stats, "XM_Fig4_Stats.csv")
+```
+
+
+#### Box plots of selected Fe response proteins (IdiA and two paralogs of ferredoxin) [Figure 5C]
+```{r, message=FALSE, warning=FALSE}
+# load protein data for each strain
+oo <- read.csv("oo_protein_data.csv", check.names = FALSE) # YX04-1
+
+co <- read.csv("co_protein_data.csv", check.names = FALSE) # XM-24
+
+# function for pulling out abundance data for protein of interest, returns formatted df
+boxPlotDfFunction <- function(protein_KO, 
+                              data, 
+                              strain)
+  {
+  protein_df <- data[data$KO == protein_KO,] # pull out protein abundance data for selected KO
+  protein_name <- protein_df$KODef # save protein name
+  protein_df <- subset(protein_df, select = c(2:13)) # select only protein abundance data
+  protein_df_long <- gather(protein_df, "Sample", "Abundance") 
+  protein_df_long$Temperature <- substr(protein_df_long$Sample, 1,2)
+  protein_df_long$Temperature <- as.factor(protein_df_long$Temperature) # add temperature and Fe
+  protein_df_long$Iron <- substr(protein_df_long$Sample, 3,3)
+  protein_df_long$Protein <- protein_name
+  protein_df_long$Strain <- strain
+  return(protein_df_long)
+}
+
+# run function for each protein and strain, then combine all into one df for making facet plot
+
+# IdiA:
+idiA_yx <- boxPlotDfFunction(protein_KO = "K02012", data = oo, strain = "YX04-1")
+idiA_yx$Protein <- "IdiA" # shorten name 
+
+idiA_xm <- boxPlotDfFunction(protein_KO = "K02012", data = co, strain = "XM-24")
+idiA_xm$Protein <- "IdiA"
+
+# Ferredoxin:
+fd_yx <- boxPlotDfFunction(protein_KO = "K02639", data = oo, strain = "YX04-1")
+fd_yx$Protein <- "Fd"
+
+fd_xm <- boxPlotDfFunction(protein_KO = "K02639", data = co, strain = "XM-24")
+fd_xm$Protein <- "Fd"
+
+# Ferredoxin, 2Fe-2S:
+fd2_yx <- boxPlotDfFunction(protein_KO = "K04755", data = oo, strain = "YX04-1")
+fd2_yx$Protein <- "Fd, 2Fe-2S"
+
+fd2_xm <- boxPlotDfFunction(protein_KO = "K04755", data = co, strain = "XM-24")
+fd2_xm$Protein <- "Fd, 2Fe-2S"
+
+# gather into one df and prep for plotting
+facet_box_df <- rbind(idiA_yx, fd_yx, fd2_yx, 
+                      idiA_xm, fd_xm, fd2_xm)
+facet_box_df$Iron <- gsub("L", "Fe Limited", facet_box_df$Iron)
+facet_box_df$Iron <- gsub("R", "Fe Replete", facet_box_df$Iron)
+facet_box_df$Iron <- factor(facet_box_df$Iron, levels = c("Fe Replete", "Fe Limited"))
+facet_box_df$Strain <- gsub("YX04-1", "Oceanic YX04-1", facet_box_df$Strain)
+facet_box_df$Strain <- gsub("XM-24", "Coastal XM-24", facet_box_df$Strain)
+
+# plot
+fig_5C_facet_abund_box <- ggplot(facet_box_df, aes(x = Iron, y = Abundance, fill = Temperature)) +
+  geom_boxplot(alpha = 0.8, lwd = 0.3) +
+  facet_grid(factor(Protein, levels = c("IdiA", "Fd, 2Fe-2S", "Fd")) ~ factor(Strain, levels = c("Oceanic YX04-1", "Coastal XM-24")), scales = "free") +
+  scale_fill_manual(values = c("#B63679FF", "#FB8861FF")) +
+  theme_classic() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size=8, color = "black"),
+        axis.title.y = element_text(size = 10, color = "black"), 
+        axis.text.y = element_text(size = 10, color = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5), 
+        strip.background=element_rect(colour="black", fill= "white", size = 0.5),
+        strip.text.x = element_text(size = 10), 
+        strip.text.y = element_text(size = 10), 
+        legend.position = "none") +
+    labs(y = "Abundance")
+
+# add panel label 
+fig_5C_arrange <- ggarrange(fig_5C_facet_abund_box, labels = "C")
+
+# save
+pdf("Fig_5C_resize.pdf", width = 3.34, height = 3.8)
+fig_5C_arrange
+dev.off()
+
+
+# stats 
+# calculated here but letters added to box plots in affinity designer
+statsFunction <- function(protein_df)
+  {anova <- aov(Abundance ~ Temperature * Iron, data = protein_df) 
+  tukey <- TukeyHSD(anova)
+  cld <- multcompLetters4(anova, tukey)
+  cld <- data.frame(letters = cld$`Temperature:Iron`$Letters)
+  return(cld)
+}
+
+# YX04-1
+yx_idiA_stats <- statsFunction(protein_df = idiA_yx)
+colnames(yx_idiA_stats) <- "IdiA" # rename to protein name
+yx_idiA_stats$Treatment <- rownames(yx_idiA_stats) # add treatment column for merging
+rownames(yx_idiA_stats) <- NULL # remove row names
+
+yx_fd_stats <- statsFunction(protein_df = fd_yx)
+colnames(yx_fd_stats) <- "Fd" 
+yx_fd_stats$Treatment <- rownames(yx_fd_stats) 
+rownames(yx_fd_stats) <- NULL 
+
+yx_fd2_stats <- statsFunction(protein_df = fd2_yx)
+colnames(yx_fd2_stats) <- "Fd2" 
+yx_fd2_stats$Treatment <- rownames(yx_fd2_stats) 
+rownames(yx_fd2_stats) <- NULL 
+
+# merge into one df and save 
+yx_fig5_stats <- merge(yx_idiA_stats, yx_fd_stats, by = "Treatment")
+yx_fig5_stats <- merge(yx_fig5_stats, yx_fd2_stats, by = "Treatment")
+write.csv(yx_fig5_stats, "YX_Fig5_Stats.csv")
+
+# XM-24
+xm_idiA_stats <- statsFunction(protein_df = idiA_xm)
+colnames(xm_idiA_stats) <- "IdiA" # rename to protein name
+xm_idiA_stats$Treatment <- rownames(xm_idiA_stats) # add treatment column for merging
+rownames(xm_idiA_stats) <- NULL # remove row names
+
+xm_fd_stats <- statsFunction(protein_df = fd_xm)
+colnames(xm_fd_stats) <- "Fd" 
+xm_fd_stats$Treatment <- rownames(xm_fd_stats) 
+rownames(xm_fd_stats) <- NULL 
+
+xm_fd2_stats <- statsFunction(protein_df = fd2_xm)
+colnames(xm_fd2_stats) <- "Fd2" 
+xm_fd2_stats$Treatment <- rownames(xm_fd2_stats) 
+rownames(xm_fd2_stats) <- NULL 
+
+# merge into one df and save 
+xm_fig5_stats <- merge(xm_idiA_stats, xm_fd_stats, by = "Treatment")
+xm_fig5_stats <- merge(xm_fig5_stats, xm_fd2_stats, by = "Treatment")
+write.csv(xm_fig5_stats, "XM_Fig5_Stats.csv")
+```
+
+
+#### Heat maps of selected proteins [Figure 5A, 5B]
+
+**First build and save dfs for each strain**
+```{r, message=FALSE, warning=FALSE}
+# YX04-1:
+
+# load functional categories dfs for each pairwise comparison
+yx_27L27R_cats <- read.csv("YX_27Lvs27R_DAPs_categories.csv")
+
+yx_30L30R_cats <- read.csv("YX_30Lvs30R_DAPs_categories.csv")
+
+yx_30L27R_cats <- read.csv("YX_30Lvs27R_DAPs_categories.csv")
+
+# filter to retain only photosynthesis proteins
+yx_27L27R_photo <- yx_27L27R_cats %>%
+  filter(str_detect(category, "Photo")) # 12 photosynthesis proteins
+yx_27L27R_photo$comparison <- "27Lvs27R"
+
+yx_30L30R_photo <- yx_30L30R_cats %>%
+  filter(str_detect(category, "Photo")) # 23 photosynthesis proteins
+yx_30L30R_photo$comparison <- "30Lvs30R"
+
+yx_30L27R_photo <- yx_30L27R_cats %>%
+  filter(str_detect(category, "Photo")) # 21 photosynthesis proteins
+yx_30L27R_photo$comparison <- "30Lvs27R"
+
+# format
+# keep KO, KOName, and comparison columns
+yx_27L27R_photo <- yx_27L27R_photo[,c("KO", "KOName", "comparison")]
+yx_30L30R_photo <- yx_30L30R_photo[,c("KO", "KOName", "comparison")]
+yx_30L27R_photo <- yx_30L27R_photo[,c("KO", "KOName", "comparison")]
+
+# combine into one df and remove duplicates
+yx_photo_all <- rbind(yx_27L27R_photo, yx_30L30R_photo, yx_30L27R_photo)
+
+yx_photo_all <- yx_photo_all %>% 
+  dplyr::group_by(KO) %>% 
+  dplyr::mutate(comparison = paste0(comparison, collapse = ",")) # retain which comparison(s) each protein is in
+
+yx_photo_all <- yx_photo_all[!duplicated(yx_photo_all[,"KO"]),] # remove duplicates
+
+# arrange KOs in order 
+yx_photo_all <- yx_photo_all[order(yx_photo_all$KO),]
+
+# save df for heat map
+write.csv(yx_photo_all, "yx_photo_DAPs.csv", row.names = FALSE)
+#writexl::write_xlsx(yx_photo_all, "yx_photo_DAPs_2.xlsx") # Edited in Excel to add annotations for heat map
+
+
+# XM-24:
+# load functional categories dfs for each pairwise comparison
+xm_27L27R_cats <- read.csv("XM_27Lvs27R_DAPs_categories.csv")
+
+xm_30L30R_cats <- read.csv("XM_30Lvs30R_DAPs_categories.csv")
+
+xm_30L27R_cats <- read.csv("XM_30Lvs27R_DAPs_categories.csv")
+
+# filter to retain only photosynthesis proteins
+xm_27L27R_photo <- xm_27L27R_cats %>%
+  filter(str_detect(category, "Photo")) # 7 photosynthesis proteins
+xm_27L27R_photo$comparison <- "27Lvs27R"
+
+xm_30L30R_photo <- xm_30L30R_cats %>%
+  filter(str_detect(category, "Photo")) # 3 photosynthesis proteins
+xm_30L30R_photo$comparison <- "30Lvs30R"
+
+xm_30L27R_photo <- xm_30L27R_cats %>%
+  filter(str_detect(category, "Photo")) # 9 photosynthesis proteins
+xm_30L27R_photo$comparison <- "30Lvs27R"
+
+# format
+# keep KO, KOName and pairwise comparison columns
+xm_27L27R_photo <- xm_27L27R_photo[,c("KO", "KOName", "comparison")]
+xm_30L30R_photo <- xm_30L30R_photo[,c("KO", "KOName", "comparison")]
+xm_30L27R_photo <- xm_30L27R_photo[,c("KO", "KOName", "comparison")]
+
+# combine into one df and remove duplicates
+xm_photo_all <- rbind(xm_27L27R_photo, xm_30L30R_photo, xm_30L27R_photo)
+
+xm_photo_all <- xm_photo_all %>% 
+  dplyr::group_by(KO) %>% 
+  dplyr::mutate(comparison = paste0(comparison, collapse = ",")) # retain which comparison(s) each KO is in
+
+xm_photo_all <- xm_photo_all[!duplicated(xm_photo_all[,"KO"]),] # remove duplicates
+
+# arrange KOs in order 
+xm_photo_all <- xm_photo_all[order(xm_photo_all$KO),]
+
+# save df for heat map
+write.csv(xm_photo_all, "xm_photo_DAPs.csv", row.names = FALSE)
+#writexl::write_xlsx(xm_photo_all, "XM_photo_DAPs.xlsx") # edited in Excel to add annotations for heat map
+```
+
+
+**Make heatmaps**
+```{r, message=FALSE, warning=FALSE}
+# load protein data for each strain
+oo <- read.csv("oo_protein_data.csv", check.names = FALSE) # YX04-1
+
+co <- read.csv("co_protein_data.csv", check.names = FALSE) # XM-24
+
+# load annotated photosynthesis dfs  
+yx_photo <- read.csv("yx_photo_DAPs_annot.csv")
+xm_photo <- read.csv("xm_photo_DAPs_annot.csv")
+
+# function for prepping heat map df:
+# returns df with treatment means, normalized as z-scores
+heatMapDfFunction <- function(protein_KOs, 
+                              data)
+  {
+  # define protein name 
+  protein_name <- data$KODef[data$KO %in% protein_KOs]
+  # make df of protein abundance
+  protein_df <- data[data$KO %in% protein_KOs,]
+  # calculate means for each treatment 
+  mean_27L <- as.numeric(rowMeans(protein_df[,c("27L1", "27L2", "27L3")]))  
+  mean_30L <- as.numeric(rowMeans(protein_df[,c("30L1", "30L2", "30L3")]))  
+  mean_27R <- as.numeric(rowMeans(protein_df[,c("27R1", "27R2", "27R3")]))  
+  mean_30R <- as.numeric(rowMeans(protein_df[,c("30R1", "30R2", "30R3")]))
+  # format and then combine means into one df with rownames 
+  means_df <- as.data.frame(cbind(mean_27L, mean_30L, 
+                                  mean_27R, mean_30R))
+  rownames(means_df) <- protein_df$KODef
+  # Z score normalize
+  z_score = function(x){
+    m = apply(x, 1, mean, na.rm = T)
+    s = apply(x, 1, sd, na.rm = T)
+    return((x - m) / s)
+  }
+  means_df_scale <- z_score(means_df) 
+  return(means_df_scale)
+}
+
+# build means df for each strain: 
+yx_photo_df <- heatMapDfFunction(protein_KOs = yx_photo$KO, data = oo)
+# shorten the long names:
+row.names(yx_photo_df)[21] <- "MgPME cyclase" # magnesium-protoporphyrin IX monomethyl ester (oxidative) cyclase 
+row.names(yx_photo_df)[26] <- "geranylgeranyl-bacteriochlorophyllide a reductase"
+
+xm_photo_df <- heatMapDfFunction(protein_KOs = xm_photo$KO, data = co)
+row.names(xm_photo_df)[12] <- "geranylgeranyl-bacteriochlorophyllide a reductase"
+
+# make row annot df
+row_annot_df <- yx_photo_df
+row_annot_df$Protein <- rownames(row_annot_df)
+row_annot_df$Annot <- yx_photo$annot
+row_annot_df <- as.data.frame(row_annot_df[, -c(1:4)])
+
+row_annot_df_join <- xm_photo_df
+row_annot_df_join$Protein <- rownames(row_annot_df_join)
+row_annot_df_join$Annot <- xm_photo$annot
+row_annot_df_join <- as.data.frame(row_annot_df_join[, -c(1:4)])
+
+row_annot_df <- rbind(row_annot_df, row_annot_df_join)
+
+row_annot_df = row_annot_df[!duplicated(row_annot_df$Protein),]
+row_annot_df <- row_annot_df[order(row_annot_df$Annot),]
+
+row_annot_df <- row_annot_df %>% remove_rownames %>% column_to_rownames(var="Protein")
+colnames(row_annot_df) <- "Function"
+
+# function for making heat map: 
+# returns heat map for each strain
+heatMapFunction <- function(means_df) {
+  # make annotations df for samples
+  annotation <- data.frame(Var1 = factor(1:4, labels = c('1'))) 
+  rownames(annotation) <- colnames(means_df[,c(1:4)])
+  annotation$Var1 <- rownames(annotation)
+  annotation$Temperature <- substr(annotation$Var1, start = 6, stop = 7)
+  annotation$Iron <- substr(annotation$Var1, start = 8, stop = 8)
+  annotation$Iron <- gsub("L", "Limited", annotation$Iron)
+  annotation$Iron <- gsub("R", "Replete", annotation$Iron)
+  annotation <- annotation[,-1]
+  # plot:
+  paletteLength <- 100
+  # annotation colors
+  annot_col <- list( 
+    Iron = c("Limited" = "lightgrey", "Replete" = "black"),
+    Temperature = c("27" = "#B63679FF", "30" = "#FB8861FF"),
+    Function = c("Chlorophyll" = "#87C55F", "PBS" = "#117733", "ETC" = "#CC6677", "PSI" = "#AA4499", "PSII" = "#661100", "Other" = "#F6CF71"))
+  plot <- pheatmap((as.matrix((means_df))), 
+                   color = rev(brewer.pal(11,"RdBu")),
+                   legend = FALSE, annotation_legend = FALSE,
+                   annotation_col = annotation, 
+                   annotation_row = row_annot_df,
+                   annotation_colors = annot_col,
+                   annotation_names_col = TRUE,
+                   annotation_names_row = FALSE,
+                   border_color = "black",
+                   cellwidth=7, cellheight=9, 
+                   fontsize=8,
+                   show_rownames = TRUE, 
+                   cluster_cols = FALSE, 
+                   cluster_rows = TRUE,
+                   show_colnames = FALSE, 
+                   width = 3.9, 
+                   height = 4
+  )
+  return(plot)
+}
+
+# input normalized df of treatment means of photosynthesis proteins
+yxHeat <- heatMapFunction(means_df = yx_photo_df)
+
+xmHeat <- heatMapFunction(means_df = xm_photo_df)
+
+# save
+pdf("Fig_5A_YX04-1_resize.pdf", width = 4, height = 4.5)
+yxHeat
+dev.off()
+
+pdf("Fig_5B_XM-24_resize.pdf", width = 4, height = 2.7)
+xmHeat
+dev.off()
+
+# arranged with legends and facet abundance plot in affinity designer
+# annotations showing pairwise comparisons added in affinity designer
+```
