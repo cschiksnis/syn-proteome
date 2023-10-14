@@ -2,8 +2,8 @@ R code and files for performing differential abundance analysis using the Power 
 
 
 * Be sure to move these three files out of current directory each time you run a new pairwise comparison, or it won't work when you try to export PLGEM results:
-_fit.csv 
-_stn_p-value.csv 
+_fit.csv,
+_stn_p-value.csv, and
 _L_vs_R_0.01.txt (or _30_vs_27_0.01.txt)
 
 
